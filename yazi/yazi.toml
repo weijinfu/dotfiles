@@ -1,0 +1,14 @@
+[mgr]
+ratio = [ 1, 4, 3 ]
+
+[opener]
+edit = [
+  { run = 'vim %s', block = true, desc = "Open in Current Pane" },
+  { run = "ya emit plugin toggle-pane min-parent; ya emit plugin toggle-pane min-preview; tmux split-window -h -p 80 -c '#{pane_current_path}' \"sh -lc 'vim %s; ya emit-to \\\"$YAZI_ID\\\" plugin toggle-pane min-parent; ya emit-to \\\"$YAZI_ID\\\" plugin toggle-pane min-preview'\"", orphan = true, desc = "Open in Right Pane" },
+  { run = 'code %s', orphan = true, desc = "Open in Vscode" }
+]
+
+[open]
+append_rules = [
+  { name = "text/*", use = [ "edit" ] },
+]
