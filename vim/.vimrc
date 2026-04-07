@@ -10,7 +10,7 @@ set shiftwidth=4
 let mapleader=" "
 let &t_SI.="\e[5 q" "SI = INSERT mode
 let &t_SR.="\e[4 q" "SR = REPLACE mode
-let &t_EI.="\e[1 q" "EI = NORMAL mode (ELSE)let mapleader=" "
+let &t_EI.="\e[1 q" "EI = NORMAL mode
 
 map J 10j
 map K 10k
@@ -22,6 +22,10 @@ map s <nop>
 inoremap jj <Esc>
 inoremap kk <Esc>
 
+" outer edit
+set autoread
+autocmd FocusGained,BufEnter,CursorHold,CursorHoldI * if mode() != 'c' | checktime | endif
+
 " coding
 set hidden
 set updatetime=300
@@ -29,9 +33,24 @@ set shortmess+=c
 set signcolumn=yes
 set completeopt=menuone,noinsert,noselect
 
-inoremap <silent><expr> <TAB> pumvisible() ? "\<C-n>" : coc#refresh()
-inoremap <silent><expr> <S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
-inoremap <silent><expr> <CR> pumvisible() ? coc#_select_confirm() : "\<CR>"
+" Tab
+inoremap <silent><expr> <TAB>
+      \ pumvisible() ? "\<C-n>" :
+      \ CheckBackspace() ? "\<TAB>" :
+      \ coc#refresh()
+
+" Shift-Tab
+inoremap <silent><expr> <S-TAB>
+      \ pumvisible() ? "\<C-p>" :
+      \ "\<C-d>"
+" Enter
+inoremap <silent><expr> <CR>
+      \ pumvisible() ? coc#_select_confirm() : "\<CR>"
+
+function! CheckBackspace() abort
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1] =~# '\s'
+endfunction
 
 nmap <silent> gd <Plug>(coc-definition)
 nmap <silent> gy <Plug>(coc-type-definition)
