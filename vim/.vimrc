@@ -4,7 +4,7 @@ set nu
 syntax on
 set termguicolors
 set nobackup
-set clipboard=unnamed
+set clipboard=unnamed "unamedplus for ubuntu
 set tabstop=4
 set shiftwidth=4
 let mapleader=" "
