@@ -108,205 +108,157 @@ proxy-providers:
     skip-cert-verify: true
     health-check: { enable: true, url: "https://www.gstatic.com/generate_204", interval: 300, lazy: true }
 
-# ── 代理组 ────────────────────────────────────────────────────
 proxy-groups:
-  - name: "国外流量"
+  - name: VPS
     type: select
-    use: ["provider1"]
-    proxies: ["googlecloud"]
+    proxies: []
 
-  - name: "国内直连"
+  - name: PROXY
     type: select
-    proxies: [DIRECT]
+    proxies: ["VPS", "HongKong", "Taiwan", "Singapore", "USA", "Japan", "Other-Regions"]
 
-  - name: 自动选择
-    type: url-test
-    use: ["provider1"]
-    proxies: ["googlecloud"]
-    interval: 300
-    tolerance: 50
-
-  - name: 其他流量
+  - name: Others
     type: select
-    proxies: ["国内直连", "国外流量", "自动选择"]
+    proxies: [DIRECT, PROXY]
+
+  - name: 🎮 GAME
+    type: select
+    proxies: [DIRECT, "VPS", "HongKong", "Taiwan", "Singapore", "USA", "Japan", "Other-Regions"]
+
+  - name: 📹 Netflix
+    type: select
+    proxies: ["VPS", "HongKong", "Taiwan", "Singapore", "USA", "Japan", "Other-Regions"]
+
+  - name: 🤖 AI
+    type: select
+    proxies: ["VPS", "HongKong", "Taiwan", "Singapore", "USA", "Japan", "Other-Regions"]
+
+  - name: 🍎 Apple
+    type: select
+    proxies: [DIRECT, "VPS", "HongKong", "Taiwan", "Singapore", "USA", "Japan", "Other-Regions"]
 
   - name: HongKong
-    type: select
-    # type: url-test
+    type: url-test
     include-all: true
     exclude-type: direct
     filter: "(?i)港|hk|hongkong|hong kong"
-    # url: "https://www.gstatic.com/generate_204"
-    # interval: 300
-    # tolerance: 50
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
 
   - name: Taiwan
-    type: select
-    # type: url-test
+    type: url-test
     include-all: true
     exclude-type: direct
     filter: "(?i)台|tw|taiwan"
-    # url: "https://www.gstatic.com/generate_204"
-    # interval: 300
-    # tolerance: 50
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
 
   - name: Singapore
-    type: select
-    # type: url-test
+    type: url-test
     include-all: true
     exclude-type: direct
     filter: "(?i)新|sg|singapore"
-    # url: "https://www.gstatic.com/generate_204"
-    # interval: 300
-    # tolerance: 50
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
 
   - name: USA
-    type: select
-    # type: url-test
+    type: url-test
     include-all: true
     exclude-type: direct
     filter: "(?i)美|us|usa|america"
-    # url: "https://www.gstatic.com/generate_204"
-    # interval: 300
-    # tolerance: 50
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
 
   - name: Japan
-    type: select
-    # type: url-test
+    type: url-test
     include-all: true
     exclude-type: direct
     filter: "(?i)日|jp|japan"
-    # url: "https://www.gstatic.com/generate_204"
-    # interval: 300
-    # tolerance: 50
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
 
-  - name: UK
+  - name: Other-Regions
     type: select
-    # type: url-test
     include-all: true
     exclude-type: direct
-    filter: "(?i)英|uk|united kingdom|britain"
-    # url: "https://www.gstatic.com/generate_204"
-    # interval: 300
-    # tolerance: 50
+    exclude-filter: "(?i)港|hk|hongkong|hong kong|台|tw|taiwan|新|sg|singapore|美|us|usa|america|日|jp|japan"
 
-  - name: Other
-    type: select
-    # type: url-test
-    include-all: true
-    exclude-type: direct
-    exclude-filter: "(?i)港|hk|hongkong|hong kong|台|tw|taiwan|新|sg|singapore|美|us|usa|america|日|jp|japan|英|uk|united kingdom|britain"
-    # url: "https://www.gstatic.com/generate_204"
-    # interval: 300
-    # tolerance: 50
+rules:
+  # ===== 游戏 =====
+  - RULE-SET,category-games,🎮 GAME
 
-# ── 路由规则 ──────────────────────────────────────────────────
+  # ===== Netflix =====
+  - RULE-SET,netflix,📹 Netflix
+
+  # ===== 流媒体 =====
+  # ===== AI =====
+  - RULE-SET,category-ai,🤖 AI
+
+  # ===== Apple =====
+  - RULE-SET,apple,🍎 Apple
+
+  # ===== 其他国外 =====
+  - RULE-SET,geolocation-!cn,PROXY
+
+  # ===== 国内 =====
+  - RULE-SET,cn,DIRECT
+  - GEOIP,CN,DIRECT
+
+  # ===== 兜底 =====
+  - MATCH,Others
+
 rule-providers:
-  reject:
+
+  # ===== 游戏 =====
+  category-games:
     type: http
     behavior: domain
-    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/reject.txt"
-    path: ./ruleset/reject.yaml
+    url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-games-!cn.yaml
+    path: ./ruleset/category-games.yaml
     interval: 86400
-
-  icloud:
+    #
+  # ===== Netflix =====
+  netflix:
     type: http
     behavior: domain
-    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/icloud.txt"
-    path: ./ruleset/icloud.yaml
+    url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/netflix.yaml
+    path: ./ruleset/netflix.yaml
     interval: 86400
 
+  # ===== 流媒体 =====
+  #
+  # ===== AI =====
+  category-ai:
+    type: http
+    behavior: domain
+    url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-ai-!cn.yaml
+    path: ./ruleset/category-ai.yaml
+    interval: 86400
+
+  # ===== Apple =====
   apple:
     type: http
     behavior: domain
-    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/apple.txt"
+    url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/apple.yaml
     path: ./ruleset/apple.yaml
     interval: 86400
 
-  google:
+  # ===== 基础 =====
+  cn:
     type: http
     behavior: domain
-    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/google.txt"
-    path: ./ruleset/google.yaml
+    url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/cn.yaml
+    path: ./ruleset/cn.yaml
     interval: 86400
 
-  proxy:
+  geolocation-!cn:
     type: http
     behavior: domain
-    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/proxy.txt"
-    path: ./ruleset/proxy.yaml
+    url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/geolocation-!cn.yaml
+    path: ./ruleset/geolocation.yaml
     interval: 86400
-
-  direct:
-    type: http
-    behavior: domain
-    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/direct.txt"
-    path: ./ruleset/direct.yaml
-    interval: 86400
-
-  private:
-    type: http
-    behavior: domain
-    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/private.txt"
-    path: ./ruleset/private.yaml
-    interval: 86400
-
-  gfw:
-    type: http
-    behavior: domain
-    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/gfw.txt"
-    path: ./ruleset/gfw.yaml
-    interval: 86400
-
-  tld-not-cn:
-    type: http
-    behavior: domain
-    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/tld-not-cn.txt"
-    path: ./ruleset/tld-not-cn.yaml
-    interval: 86400
-
-  telegramcidr:
-    type: http
-    behavior: ipcidr
-    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/telegramcidr.txt"
-    path: ./ruleset/telegramcidr.yaml
-    interval: 86400
-
-  cncidr:
-    type: http
-    behavior: ipcidr
-    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/cncidr.txt"
-    path: ./ruleset/cncidr.yaml
-    interval: 86400
-
-  lancidr:
-    type: http
-    behavior: ipcidr
-    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/lancidr.txt"
-    path: ./ruleset/lancidr.yaml
-    interval: 86400
-
-  applications:
-    type: http
-    behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/applications.txt"
-    path: ./ruleset/applications.yaml
-    interval: 86400
-## 规则
-rules:
-  - RULE-SET,applications,DIRECT
-  - DOMAIN,clash.razord.top,DIRECT
-  - DOMAIN,yacd.haishan.me,DIRECT
-  - RULE-SET,private,DIRECT
-  - RULE-SET,reject,REJECT
-  - RULE-SET,icloud,DIRECT
-  - RULE-SET,apple,DIRECT
-  - RULE-SET,google,国外流量
-  - RULE-SET,proxy,国外流量
-  - RULE-SET,direct,DIRECT
-  - RULE-SET,lancidr,DIRECT
-  - RULE-SET,cncidr,DIRECT
-  - RULE-SET,telegramcidr,国外流量
-  - GEOIP,LAN,DIRECT
-  - GEOIP,CN,DIRECT
-  - MATCH,其他流量
