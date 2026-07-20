@@ -81,6 +81,12 @@ The script also installs:
 
 - Vim plugins declared in `.vimrc` using vim-plug
 - Yazi plugins and flavors locked in `package.toml` using `ya pkg install`
+- Yazi's recommended Nerd Fonts Symbols Only font
+
+On Ubuntu, the font and its fontconfig fallback configuration are installed under
+the user's home directory and `fc-cache` is refreshed. When Yazi runs over SSH,
+glyphs are rendered by the local terminal, so the font must also be installed on
+the client machine.
 
 Homebrew is installed automatically when it is needed. Ubuntu package installation
 may request `sudo`; the Yazi binary installer supports `x86_64` and `aarch64`.

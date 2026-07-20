@@ -10,5 +10,5 @@ edit = [
 
 [open]
 append_rules = [
-  { name = "text/*", use = [ "edit" ] },
+  { mime = "text/*", use = [ "edit" ] },
 ]

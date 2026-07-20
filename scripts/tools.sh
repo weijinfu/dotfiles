@@ -304,3 +304,74 @@ ensure_yazi() {
   command -v yazi >/dev/null 2>&1 || die "yazi installation failed"
   command -v ya >/dev/null 2>&1 || die "Yazi CLI installation failed"
 }
+
+install_yazi_font_ubuntu() {
+  local font_dir="$HOME/.local/share/fonts/NerdFontsSymbolsOnly"
+  local fontconfig_dir="$HOME/.config/fontconfig/conf.d"
+  local temp_dir
+  local archive
+
+  ensure_curl
+  command -v xz >/dev/null 2>&1 || apt_install xz-utils
+  command -v fc-cache >/dev/null 2>&1 || apt_install fontconfig
+
+  temp_dir="$(mktemp -d)"
+  archive="$temp_dir/NerdFontsSymbolsOnly.tar.xz"
+
+  log "downloading the latest Nerd Fonts Symbols Only release"
+  if ! curl -fL --retry 3 \
+    -o "$archive" \
+    "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/NerdFontsSymbolsOnly.tar.xz"; then
+    rm -rf "$temp_dir"
+    die "failed to download Nerd Fonts Symbols Only"
+  fi
+
+  if ! tar -xJf "$archive" -C "$temp_dir"; then
+    rm -rf "$temp_dir"
+    die "failed to extract Nerd Fonts Symbols Only"
+  fi
+
+  ensure_dir "$font_dir"
+  ensure_dir "$fontconfig_dir"
+  install -m 0644 \
+    "$temp_dir/SymbolsNerdFont-Regular.ttf" \
+    "$font_dir/SymbolsNerdFont-Regular.ttf"
+  install -m 0644 \
+    "$temp_dir/SymbolsNerdFontMono-Regular.ttf" \
+    "$font_dir/SymbolsNerdFontMono-Regular.ttf"
+  install -m 0644 \
+    "$temp_dir/10-nerd-font-symbols.conf" \
+    "$fontconfig_dir/10-nerd-font-symbols.conf"
+  rm -rf "$temp_dir"
+
+  fc-cache -f "$font_dir"
+  log "installed Nerd Fonts Symbols Only in $font_dir"
+}
+
+ensure_yazi_font() {
+  case "$PLATFORM" in
+    macos)
+      local brew_prefix
+
+      ensure_homebrew
+      brew_prefix="$(cd "$(dirname "$BREW_BIN")/.." && pwd)"
+      if [[ -d "$brew_prefix/Caskroom/font-symbols-only-nerd-font" ||
+        -f "$HOME/Library/Fonts/SymbolsNerdFont-Regular.ttf" ||
+        -f "$HOME/Library/Fonts/SymbolsNerdFontMono-Regular.ttf" ]]; then
+        log "Nerd Fonts Symbols Only is already installed"
+      else
+        log "installing Yazi's recommended Nerd Font"
+        "$BREW_BIN" install font-symbols-only-nerd-font
+      fi
+      ;;
+    ubuntu)
+      if [[ -f "$HOME/.local/share/fonts/NerdFontsSymbolsOnly/SymbolsNerdFont-Regular.ttf" &&
+        -f "$HOME/.local/share/fonts/NerdFontsSymbolsOnly/SymbolsNerdFontMono-Regular.ttf" &&
+        -f "$HOME/.config/fontconfig/conf.d/10-nerd-font-symbols.conf" ]]; then
+        log "Nerd Fonts Symbols Only is already installed"
+      else
+        install_yazi_font_ubuntu
+      fi
+      ;;
+  esac
+}

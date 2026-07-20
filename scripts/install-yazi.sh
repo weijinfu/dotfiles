@@ -56,6 +56,7 @@ install_yazi_packages() {
 
 install_yazi_config() {
   ensure_yazi
+  ensure_yazi_font
   link_yazi_configs
   install_yazi_packages
 }

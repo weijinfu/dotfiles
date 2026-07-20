@@ -79,11 +79,8 @@ function! s:ApplySystemTheme() abort
 			silent! colorscheme catppuccin_latte
 		endif
 	else
-		if &background ==# 'light'
-			silent! colorscheme catppuccin_latte
-		else
-			silent! colorscheme catppuccin_mocha
-		endif
+		set background=dark
+		silent! colorscheme catppuccin_mocha
 	endif
 endfunction
 
