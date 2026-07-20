@@ -1,8 +1,9 @@
-[plugin]
-deps = [
-  { use = "yazi-rs/plugins:toggle-pane" }
-]
+[[plugin.deps]]
+use = "yazi-rs/plugins:toggle-pane"
+rev = "bb758e2"
+hash = "15e5b67a241172cbb86b8fbf9e63692"
 
 [[flavor.deps]]
 use = "yazi-rs/flavors:catppuccin-mocha"
-rev = "HEAD"
+rev = "4770a34"
+hash = "7dfe41c9c3d9be76da8a844263d0bbed"

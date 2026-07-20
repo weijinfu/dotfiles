@@ -2,138 +2,166 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
-BACKUP_SUFFIX="$(date +%Y%m%d%H%M%S)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPTS_DIR="$ROOT_DIR/scripts"
 
-log() {
-  printf '[install] %s\n' "$1"
+# shellcheck source=scripts/lib.sh
+source "$SCRIPTS_DIR/lib.sh"
+# shellcheck source=scripts/install-zsh.sh
+source "$SCRIPTS_DIR/install-zsh.sh"
+# shellcheck source=scripts/install-tmux.sh
+source "$SCRIPTS_DIR/install-tmux.sh"
+# shellcheck source=scripts/install-vim.sh
+source "$SCRIPTS_DIR/install-vim.sh"
+# shellcheck source=scripts/install-yazi.sh
+source "$SCRIPTS_DIR/install-yazi.sh"
+# shellcheck source=scripts/install-mihomo.sh
+source "$SCRIPTS_DIR/install-mihomo.sh"
+# shellcheck source=scripts/install-vscode.sh
+source "$SCRIPTS_DIR/install-vscode.sh"
+
+COMPONENTS="zsh tmux vim yazi mihomo vscode"
+SELECTED=""
+
+print_help() {
+  cat <<EOF
+Usage:
+  ./install.sh                     Interactive selection
+  ./install.sh all                 Install every configuration
+  ./install.sh vim yazi            Install selected configurations
+
+Available configurations:
+  zsh  tmux  vim  yazi  mihomo  vscode
+EOF
 }
 
-warn() {
-  printf '[install] warning: %s\n' "$1" >&2
-}
+add_component() {
+  local component="$1"
 
-detect_platform() {
-  case "$(uname -s)" in
-    Darwin)
-      PLATFORM="macos"
-      ;;
-    Linux)
-      if [[ -f /etc/os-release ]]; then
-        # shellcheck disable=SC1091
-        . /etc/os-release
-        case "${ID:-}" in
-          ubuntu)
-            PLATFORM="ubuntu"
-            ;;
-          *)
-            warn "detected Linux distribution '${ID:-unknown}', continuing with Ubuntu-compatible layout"
-            PLATFORM="ubuntu"
-            ;;
-        esac
-      else
-        warn "unable to detect Linux distribution, continuing with Ubuntu-compatible layout"
-        PLATFORM="ubuntu"
-      fi
+  case " $SELECTED " in
+    *" $component "*)
       ;;
     *)
-      printf 'Unsupported platform: %s\n' "$(uname -s)" >&2
-      exit 1
+      SELECTED="${SELECTED:+$SELECTED }$component"
       ;;
   esac
 }
 
-ensure_dir() {
-  mkdir -p "$1"
+select_all() {
+  local component
+  for component in $COMPONENTS; do
+    add_component "$component"
+  done
 }
 
-backup_existing() {
-  local target="$1"
+parse_selection() {
+  local selection="$1"
+  local item
 
-  if [[ -L "$target" ]]; then
-    local current
-    current="$(readlink "$target")"
-    if [[ "$current" == "$2" ]]; then
-      log "already linked: $target"
-      return 1
-    fi
-  fi
-
-  if [[ -e "$target" || -L "$target" ]]; then
-    local backup_target="${target}.backup.${BACKUP_SUFFIX}"
-    log "backing up $target -> $backup_target"
-    mv "$target" "$backup_target"
-  fi
-
-  return 0
+  for item in $selection; do
+    case "$item" in
+      1 | all)
+        select_all
+        ;;
+      2 | zsh)
+        add_component zsh
+        ;;
+      3 | tmux)
+        add_component tmux
+        ;;
+      4 | vim)
+        add_component vim
+        ;;
+      5 | yazi)
+        add_component yazi
+        ;;
+      6 | mihomo)
+        add_component mihomo
+        ;;
+      7 | vscode)
+        add_component vscode
+        ;;
+      *)
+        die "unknown configuration: $item"
+        ;;
+    esac
+  done
 }
 
-link_path() {
-  local source="$1"
-  local target="$2"
+prompt_selection() {
+  local answer
 
-  ensure_dir "$(dirname "$target")"
-
-  if backup_existing "$target" "$source"; then
-    ln -s "$source" "$target"
-    log "linked $target -> $source"
-  fi
+  cat <<'EOF'
+Choose configurations (space-separated numbers or names):
+  1) all
+  2) zsh
+  3) tmux
+  4) vim
+  5) yazi
+  6) mihomo
+  7) vscode
+EOF
+  printf 'Selection [all]: '
+  read -r answer
+  parse_selection "${answer:-all}"
 }
 
-install_yazi() {
-  local source_dir="$SCRIPT_DIR/yazi"
-  local target_dir="$CONFIG_HOME/yazi"
+install_selected() {
+  local component
 
-  if [[ ! -d "$source_dir" ]]; then
-    warn "missing yazi config directory: $source_dir"
-    return
-  fi
+  initialize_install
+  log "selected: $SELECTED"
 
-  link_path "$source_dir" "$target_dir"
-}
+  for component in $SELECTED; do
+    case "$component" in
+      zsh)
+        install_zsh_config
+        ;;
+      tmux)
+        install_tmux_config
+        ;;
+      vim)
+        install_vim_config
+        ;;
+      yazi)
+        install_yazi_config
+        ;;
+      mihomo)
+        install_mihomo_config
+        ;;
+      vscode)
+        install_vscode_config
+        ;;
+    esac
+  done
 
-install_mihomo() {
-  local source_file="$SCRIPT_DIR/mihomo/config.yaml"
-  local target_dir="$CONFIG_HOME/mihomo"
-  local target_file="$target_dir/config.yaml"
-
-  if [[ ! -f "$source_file" ]]; then
-    warn "missing mihomo config file: $source_file"
-    return
-  fi
-
-  ensure_dir "$target_dir"
-  ensure_dir "$target_dir/proxy_providers"
-  ensure_dir "$target_dir/ruleset"
-  ensure_dir "$target_dir/ui"
-
-  link_path "$source_file" "$target_file"
-}
-
-print_summary() {
   cat <<EOF
 
 Install completed for ${PLATFORM}.
-
-Configured paths:
-  - ${CONFIG_HOME}/yazi -> ${SCRIPT_DIR}/yazi
-  - ${CONFIG_HOME}/mihomo/config.yaml -> ${SCRIPT_DIR}/mihomo/config.yaml
-
-Notes:
-  - Existing configs were backed up with suffix: .backup.${BACKUP_SUFFIX}
-  - This script installs config links only. It does not install yazi, mihomo, tmux, vim, or code.
+Configured: ${SELECTED}
+Existing paths were backed up with suffix: .backup.${BACKUP_SUFFIX}
 EOF
 }
 
 main() {
-  detect_platform
-  log "platform: ${PLATFORM}"
-  log "config home: ${CONFIG_HOME}"
+  if (($# == 0)); then
+    if [[ -t 0 ]]; then
+      prompt_selection
+    else
+      select_all
+    fi
+  else
+    case "$1" in
+      -h | --help)
+        print_help
+        return
+        ;;
+    esac
+    parse_selection "$*"
+  fi
 
-  install_yazi
-  install_mihomo
-  print_summary
+  [[ -n "$SELECTED" ]] || die "no configuration selected"
+  install_selected
 }
 
 main "$@"

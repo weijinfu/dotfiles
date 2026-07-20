@@ -1,0 +1,11 @@
+{
+    "vim.leader": "<space>",
+    "vim.handleKeys": {
+        "<C-a>": false,
+        "<C-f>": false,
+        "<C-n>": false
+    },
+    "vim.useSystemClipboard": true,
+    "vim.vimrc.enable": true,
+    "editor.experimentalEditContextEnabled": false
+}
