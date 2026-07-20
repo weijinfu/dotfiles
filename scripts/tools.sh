@@ -345,7 +345,14 @@ install_yazi_font_ubuntu() {
   rm -rf "$temp_dir"
 
   fc-cache -f "$font_dir"
+  ubuntu_yazi_font_registered ||
+    die "fontconfig cannot find the installed Nerd Font"
   log "installed Nerd Fonts Symbols Only in $font_dir"
+}
+
+ubuntu_yazi_font_registered() {
+  command -v fc-list >/dev/null 2>&1 &&
+    [[ "$(fc-list : family 2>/dev/null)" == *"Symbols Nerd Font"* ]]
 }
 
 ensure_yazi_font() {
@@ -368,10 +375,21 @@ ensure_yazi_font() {
       if [[ -f "$HOME/.local/share/fonts/NerdFontsSymbolsOnly/SymbolsNerdFont-Regular.ttf" &&
         -f "$HOME/.local/share/fonts/NerdFontsSymbolsOnly/SymbolsNerdFontMono-Regular.ttf" &&
         -f "$HOME/.config/fontconfig/conf.d/10-nerd-font-symbols.conf" ]]; then
-        log "Nerd Fonts Symbols Only is already installed"
+        command -v fc-cache >/dev/null 2>&1 || apt_install fontconfig
+        if ! ubuntu_yazi_font_registered; then
+          log "refreshing the fontconfig cache"
+          fc-cache -f "$HOME/.local/share/fonts/NerdFontsSymbolsOnly"
+        fi
+        ubuntu_yazi_font_registered ||
+          die "Nerd Font files exist but fontconfig cannot find them"
+        log "Nerd Fonts Symbols Only is installed and registered"
       else
         install_yazi_font_ubuntu
       fi
       ;;
   esac
+
+  if [[ -n "${SSH_CONNECTION:-}${SSH_TTY:-}" ]]; then
+    warn "SSH detected: Yazi glyphs are rendered by the client terminal; install a Nerd Font on the client too"
+  fi
 }

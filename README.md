@@ -69,6 +69,25 @@ Each component can also be run independently:
 Shared linking and backup behavior lives in `scripts/lib.sh`; binary installation
 helpers live in `scripts/tools.sh`.
 
+## Uninstall and restore
+
+Restore configurations from the latest timestamped backups:
+
+```bash
+# Interactive selection
+./uninstall.sh
+
+# Restore everything
+./uninstall.sh all
+
+# Restore only selected configurations
+./uninstall.sh vim yazi
+```
+
+The uninstall script removes only symlinks managed by this repository. It does not
+uninstall applications, Vim/Yazi plugins, fonts, or runtime data, and it does not
+overwrite paths that were replaced or edited after installation.
+
 If they are missing, the script installs:
 
 - macOS: clipboard-enabled `vim`, `tmux`, `yazi`, `git`, and Node.js with Homebrew
